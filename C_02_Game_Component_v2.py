@@ -156,7 +156,8 @@ class Play:
         # create four buttons in a 2 x 2 grid
         for item in range(0, 4):
             self.colour_button = Button(self.colour_frame, font=("Arial", 12),
-                                        text="Colour Name", width=15)
+                                        text="Colour Name", width=15,
+                                        command=partial(self.round_results, item))
             self.colour_button.grid(row=item // 2,
                                     column=item % 2,
                                     padx=5, pady=5)
@@ -184,6 +185,10 @@ class Play:
 
             control_ref_list.append(make_control_button)
 
+        # Retrieve next, stats and end button so that they can be configured
+        self.next_button = control_ref_list[0]
+        self.stats_button = control_ref_list[2]
+        self.end_game_button = control_ref_list[3]
 
         # Once interface has been created, invoke new
         # round function for first round.
@@ -205,9 +210,13 @@ class Play:
         # get rounds colours and median score...
         self.round_colour_list, median = get_round_colours()
 
-        # Update heading, and score to beat labels. "Hide results label
+        # Set target score as median (for later comparison)
+        self.target_score.set(median)
+
+        # Update heading, and score to beat labels. "Hide results label"
         self.heading_label.config(text=f"Round {rounds_played} of {rounds_wanted}")
-        self.target_label.config(text=f"Target Score: {median}", font=("Arial", 14, "bold"))
+        self.target_label.config(text=f"Target Score: {median}",
+                                 font=("Arial", 14, "bold"))
         self.results_label.config(text=f"{'=' * 7}", bg="#F0F0F0")
 
         # configure buttons using foreground and background colours from list
@@ -216,6 +225,33 @@ class Play:
             item.config(fg=self.round_colour_list[count][2],
                         bg=self.round_colour_list[count][0],
                         text=self.round_colour_list[count][0], state=NORMAL)
+
+        self.next_button.config(state=DISABLED)
+
+    def round_results(self, user_choice):
+        """
+        Retrieves which button was pu shed (index 0 - 3), retrieves
+        score and then compare sit with median, updates results
+        and adds results to stats list.
+        """
+
+        # Get user score and colour based on button press...
+        score = int(self.round_colour_list[user_choice][1])
+
+        # alternate way to get button name. Good for if buttons have been scrambled!
+        colour_name = self.colour_button_ref[user_choice].cget('text')
+
+        # retrieve target score and compare with user score to find round result
+        target = self.target_score.get()
+
+        if score >= target:
+            result_text = f"Success! {colour_name} earned you {score} points"
+            result_bg = "#82B366"
+        else:
+            result_text = f"Oops {colour_name} ({score}) is less than the target."
+            result_bg = "#F8CECC"
+
+        self.results_label.config(text=result_text, bg=result_bg)
 
     def close_play(self):
         # reshow root (ie: choose rounds) and end current
