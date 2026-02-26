@@ -194,6 +194,9 @@ class Play:
         self.game_frame = Frame(self.play_box)
         self.game_frame.grid(padx=10, pady=10)
 
+        # If users press the 'x' on the game window, end the entire game!
+        self.play_box.protocol('WM_DELETE_WINDOW', root.destroy)
+
         # body font for most labels...
         body_font = ("Arial", 12)
 
@@ -392,7 +395,8 @@ class Play:
         Displays hints for playing game
         :return:
         """
-        DisplayHints(self)
+        rounds_played = self.rounds_played.get()
+        DisplayHints(self, rounds_played)
 
     def to_stats(self):
         """
@@ -410,6 +414,11 @@ class Play:
 class Stats:
 
     def __init__(self, partner, all_stats_info):
+
+        # disable buttons to prevent program crashing
+        partner.hint_button.config(state=DISABLED)
+        partner.end_game_button.config(state=DISABLED)
+        partner.stats_button.config(state=DISABLED)
 
         # Extract information from master list...
         rounds_won = all_stats_info[0]
@@ -452,7 +461,7 @@ class Stats:
 
         # custom comment text and formatting
         if total_score == max_possible:
-            comment_string = ("Amazing! You got the highest"
+            comment_string = ("Amazing! You got the highest "
                               "possible score!")
             comment_colour = "#D5E8D4"
 
@@ -509,12 +518,15 @@ class Stats:
         """
         # Put help button back to normal...
         partner.stats_button.config(state=NORMAL)
+        partner.end_game_button.config(state=NORMAL)
+        partner.hint_button.config(state=NORMAL)
         self.stats_box.destroy()
 
 
 class DisplayHints:
 
-    def __init__(self, partner):
+    def __init__(self, partner, rounds_played):
+        self.rounds_played = rounds_played
 
         # setup dialogue box and background colour
         background = "#ffe6cc"
@@ -522,6 +534,8 @@ class DisplayHints:
 
         # disable help button
         partner.hint_button.config(state=DISABLED)
+        partner.end_game_button.config(state=DISABLED)
+        partner.stats_button.config(state=DISABLED)
 
         # if users press cross at top, closes help and
         # 'releases' help button
@@ -534,21 +548,18 @@ class DisplayHints:
         self.hint_frame.grid()
 
         self.hint_heading_label = Label(self.hint_frame,
-                                        text="Help / Info",
+                                        text="Hints",
                                         font=("Arial", 14, "bold"))
 
-        hint_text = "To use the program, simply enter the temperature " \
-                    "you wish to convert and then choose to convert " \
-                    "to either degrees celsius (centigrade) or " \
-                    "Fahrenheit.. \n\n" \
-                    " Note that -273 degrees C" \
-                    "(-459 F) is absolute zero (the coldest possible " \
-                    "temperature). If you try to convert a " \
-                    "temperature that is less than -273 degrees C, " \
-                    "you will get an error message. \n\n " \
-                    "To see your " \
-                    "calculation history and export it to a text " \
-                    "file, please click the 'History / Export' button."
+        hint_text = ("The score for each colour relates to it's hexadecimal code.\n\n"
+                     "Remember, the hex code for white is #FFFFFF - which is the best\n"
+                     "possible score.\n\n"
+                     "The hex code for black is #000000 which is the worst possible\n "
+                     "score.\n\n"
+                     "The first colour in the code is red, so if you had to choose\n"
+                     "between red (#FF0000), green (#00FF00), and blue (#0000FF), then\n"
+                     "red would be the best choice.\n\n"
+                     "Good luck!")
 
         self.hint_heading_label.grid(row=0)
 
@@ -571,10 +582,18 @@ class DisplayHints:
 
     def close_hints(self, partner):
         """
-        closes help dialogue box ( and enables help button )
+        closes hint dialogue box ( and enables hint button )
         """
-        # Put help button back to normal...
+        # Put hint button back to normal...
         partner.hint_button.config(state=NORMAL)
+        partner.end_game_button.config(state=NORMAL)
+
+
+        # only enable stats button if we have
+        # played at least one round.
+        if self.rounds_played >= 1:
+            partner.stats_button.config(state=NORMAL)
+
         self.hint_box.destroy()
 
 
